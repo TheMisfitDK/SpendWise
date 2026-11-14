@@ -1,4 +1,7 @@
-# Spendwise — an ASP.NET Core expense tracker
+# SpendWise — an ASP.NET Core expense tracker
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/)
 
 A small, complete expense tracker built with ASP.NET Core Razor Pages, EF Core and SQLite.
 Log what you spend, then see where the money actually went: monthly totals, a category
@@ -32,7 +35,6 @@ internet connection needed at runtime (Bootstrap and jQuery are served from `www
 ## Run it
 
 ```bash
-cd "Expense Tracker"
 dotnet run
 ```
 
@@ -129,6 +131,10 @@ than loading every entity. Budgets are deliberately left untouched.
 `SetCurrency` page, which stores the cookie and redirects back to wherever you were.
 
 Adding another currency is one line in `CurrencyService.Supported`.
+
+## License
+
+SpendWise is open source software licensed under the [MIT License](LICENSE).
 
 ## How money is stored
 
