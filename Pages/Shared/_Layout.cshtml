@@ -1,0 +1,72 @@
+﻿@{
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+    var dashboardActive = currentPage.Equals("/Index", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty;
+    var expensesActive = currentPage.StartsWith("/Expenses", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty;
+    var budgetsActive = currentPage.StartsWith("/Budgets", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Spendwise</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ExpenseTracker.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="wrap topbar-inner">
+            <a class="brand" asp-page="/Index">
+                <span class="brand-icon" aria-hidden="true">💸</span>
+                <span>Spendwise</span>
+            </a>
+
+            <nav class="main-nav">
+                <a class="nav-link @dashboardActive" asp-page="/Index">Dashboard</a>
+                <a class="nav-link @expensesActive" asp-page="/Expenses/Index">Expenses</a>
+                <a class="nav-link @budgetsActive" asp-page="/Budgets/Index">Budgets</a>
+            </nav>
+
+            <form method="post" asp-page="/SetCurrency" class="currency-form">
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <select name="code" class="currency-select" onchange="this.form.submit()"
+                        aria-label="Display currency" title="Display currency">
+                    @foreach (var option in CurrencyService.Supported)
+                    {
+                        <option value="@option.Code" selected="@(option.Code == Currency.Current.Code)">
+                            @option.Symbol @option.Code
+                        </option>
+                    }
+                </select>
+            </form>
+
+            <a class="btn btn-primary btn-sm" asp-page="/Expenses/Create">
+                <span aria-hidden="true">+</span> Add expense
+            </a>
+        </div>
+    </header>
+
+    <main class="wrap page">
+        @if (TempData["Toast"] is string toast)
+        {
+            <div class="toast-flash" role="status">@toast</div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap">
+            Spendwise — ASP.NET Core Razor Pages · EF Core · SQLite
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

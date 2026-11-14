@@ -1,0 +1,114 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Budgets";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Budgets</h1>
+        <p class="sub">Set how much you plan to spend, month by month.</p>
+    </div>
+</div>
+
+<div class="panel form-panel mb-4">
+    <div class="panel-head">
+        <h2 class="panel-title">Budget for @Model.SelectedMonthLabel</h2>
+        @if (Model.HasCustomBudget)
+        {
+            <span class="chip">Custom</span>
+        }
+        else
+        {
+            <span class="chip">Default</span>
+        }
+    </div>
+
+    <form method="post">
+        <input type="hidden" name="month" value="@Model.SelectedMonthValue" />
+
+        <div class="field">
+            <label for="Amount">Monthly limit</label>
+            <div class="money-input">
+                <span aria-hidden="true">@Currency.Symbol</span>
+                <input id="Amount" name="Amount" type="number" step="0.01" min="1" inputmode="decimal"
+                       class="form-control" value="@Model.Amount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" />
+            </div>
+            <span class="text-danger small">@Html.ValidationMessage("Amount")</span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save budget</button>
+        </div>
+    </form>
+
+    @if (Model.HasCustomBudget)
+    {
+        @* A separate form: one form cannot post to two different handlers reliably. *@
+        <form method="post" asp-page-handler="Reset" class="mt-2">
+            <input type="hidden" name="month" value="@Model.SelectedMonthValue" />
+            <button type="submit" class="btn btn-link btn-sm p-0">
+                Use the default budget of @Currency.FormatWhole(Model.DefaultBudget)
+            </button>
+        </form>
+    }
+
+    <p class="sub mt-3 mb-0">
+        Months without their own budget use the default of @Currency.FormatWhole(Model.DefaultBudget),
+        set by <code>App:MonthlyBudget</code> in <code>appsettings.json</code>.
+    </p>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h2 class="panel-title">Last 6 months</h2>
+    </div>
+
+    <div class="table-scroll">
+        <table class="list-table">
+            <thead>
+                <tr>
+                    <th scope="col">Month</th>
+                    <th scope="col" class="num">Spent</th>
+                    <th scope="col" class="num">Budget</th>
+                    <th scope="col">Used</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>
+                            <span class="desc">@row.Label</span>
+                            @if (row.IsCurrent)
+                            {
+                                <span class="desc-note">This month</span>
+                            }
+                            @if (row.IsCustom)
+                            {
+                                <span class="desc-note">Custom budget</span>
+                            }
+                        </td>
+                        <td class="num">@Currency.Format(row.Spent)</td>
+                        <td class="num">@Currency.Format(row.Budget)</td>
+                        <td>
+                            <div class="budget-cell">
+                                <div class="bar">
+                                    <div class="bar-fill"
+                                         style="width: @row.Percent; background: @(row.Over ? "var(--bad)" : "var(--brand)")"></div>
+                                </div>
+                                <span class="budget-percent @(row.Over ? "bad" : "")">@row.Percent</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                <a class="btn btn-ghost btn-sm" asp-page="./Index" asp-route-month="@row.MonthValue">Edit</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

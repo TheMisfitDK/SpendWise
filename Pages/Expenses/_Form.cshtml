@@ -1,0 +1,45 @@
+@model ExpenseFormPageModel
+@*
+    Rendered by both Create and Edit. Field names are prefixed with "Expense."
+    because the binding target on the page model is the Expense property.
+*@
+<input type="hidden" asp-for="Expense.Id" />
+
+<div class="form-grid">
+    <div class="field span-2">
+        <label asp-for="Expense.Description"></label>
+        <input asp-for="Expense.Description" class="form-control"
+               placeholder="e.g. Canteen lunch" autocomplete="off" autofocus />
+        <span asp-validation-for="Expense.Description" class="text-danger small"></span>
+    </div>
+
+    <div class="field">
+        <label asp-for="Expense.Amount"></label>
+        <div class="money-input">
+            <span aria-hidden="true">@Currency.Symbol</span>
+            <input asp-for="Expense.Amount" class="form-control" type="number"
+                   step="0.01" min="0.01" inputmode="decimal" placeholder="0.00"
+                   value="@(Model.Expense.Amount == 0m ? string.Empty : Model.Expense.Amount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" />
+        </div>
+        <span asp-validation-for="Expense.Amount" class="text-danger small"></span>
+    </div>
+
+    <div class="field">
+        <label asp-for="Expense.Category"></label>
+        <select asp-for="Expense.Category" class="form-select"
+                asp-items="@(new SelectList(CategoryCatalog.Names))"></select>
+        <span asp-validation-for="Expense.Category" class="text-danger small"></span>
+    </div>
+
+    <div class="field">
+        <label asp-for="Expense.SpentOn"></label>
+        <input asp-for="Expense.SpentOn" class="form-control" type="date" />
+        <span asp-validation-for="Expense.SpentOn" class="text-danger small"></span>
+    </div>
+
+    <div class="field">
+        <label asp-for="Expense.Notes"></label>
+        <input asp-for="Expense.Notes" class="form-control" placeholder="Optional" />
+        <span asp-validation-for="Expense.Notes" class="text-danger small"></span>
+    </div>
+</div>

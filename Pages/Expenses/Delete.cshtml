@@ -1,0 +1,37 @@
+@page
+@model DeleteModel
+@{
+    ViewData["Title"] = "Delete expense";
+    var e = Model.Expense!;
+}
+
+<div class="page-head">
+    <div>
+        <h1>Delete expense</h1>
+        <p class="sub">This cannot be undone.</p>
+    </div>
+</div>
+
+<div class="panel form-panel">
+    <div class="cat-row">
+        <span class="cat-emoji" aria-hidden="true">@CategoryCatalog.Get(e.Category).Emoji</span>
+        <div class="cat-main">
+            <div class="cat-top">
+                <span class="cat-name">@e.Description</span>
+                <span class="cat-money">@Currency.Format(e.Amount)</span>
+            </div>
+            <span class="desc-note">@e.Category · @e.SpentOn.ToString("dd MMM yyyy")</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(e.Notes))
+    {
+        <p class="sub mt-3">“@e.Notes”</p>
+    }
+
+    <form method="post" class="form-actions">
+        <input type="hidden" name="id" value="@e.Id" />
+        <button type="submit" class="btn btn-danger">Yes, delete it</button>
+        <a class="btn btn-ghost" asp-page="./Index">Keep it</a>
+    </form>
+</div>

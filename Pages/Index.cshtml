@@ -1,0 +1,277 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var s = Model.Summary;
+    var daysInMonth = DateTime.DaysInMonth(s.MonthStart.Year, s.MonthStart.Month);
+}
+
+<div class="page-head">
+    <div>
+        <h1>@s.MonthName</h1>
+        <p class="sub">
+            @if (s.Count == 0)
+            {
+                <text>Nothing logged for this month yet.</text>
+            }
+            else
+            {
+                <text>@s.Count expense@(s.Count == 1 ? "" : "s") logged, @Currency.Format(s.DailyAverage) a day on average.</text>
+            }
+        </p>
+    </div>
+
+    <div class="month-nav">
+        <a class="icon-btn" asp-page="/Index" asp-route-month="@Model.PreviousMonth.ToString("yyyy-MM")"
+           aria-label="Previous month">‹</a>
+        <input class="month-picker" type="month" value="@Model.SelectedMonthValue" max="@Model.CurrentMonthValue"
+               onchange="if (this.value) { location.search = '?month=' + this.value; }"
+               aria-label="Choose a month" />
+        @if (Model.CanGoForward)
+        {
+            <a class="icon-btn" asp-page="/Index" asp-route-month="@Model.NextMonth.ToString("yyyy-MM")"
+               aria-label="Next month">›</a>
+        }
+        else
+        {
+            <span class="icon-btn is-disabled" aria-hidden="true">›</span>
+        }
+    </div>
+</div>
+
+<div class="stats">
+    <div class="stat">
+        <div class="stat-label">Spent</div>
+        <div class="stat-value">@Currency.Format(s.Total)</div>
+        <div class="stat-note">@s.Count transaction@(s.Count == 1 ? "" : "s")</div>
+    </div>
+
+    <div class="stat">
+        <a class="stat-label stat-link" asp-page="/Budgets/Index" asp-route-month="@Model.SelectedMonthValue">
+            Budget left
+        </a>
+        <div class="stat-value @(s.OverBudget ? "text-danger" : "")">@Currency.Format(s.Remaining)</div>
+        @if (s.OverBudget)
+        {
+            <div class="stat-note bad">Over by @Currency.Format(-s.Remaining)</div>
+        }
+        else
+        {
+            <div class="stat-note good">@s.BudgetPercent of @Currency.FormatWhole(s.Budget) used</div>
+        }
+        <div class="meter">
+            <div class="meter-fill @(s.OverBudget ? "over" : "")" style="width: @s.BudgetPercent"></div>
+        </div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-label">Daily average</div>
+        <div class="stat-value">@Currency.Format(s.DailyAverage)</div>
+        <div class="stat-note">@(Model.IsCurrentMonth ? "This month so far" : "Across the whole month")</div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-label">Biggest expense</div>
+        @if (s.Biggest is null)
+        {
+            <div class="stat-value sm">—</div>
+            <div class="stat-note">No expenses yet</div>
+        }
+        else
+        {
+            <div class="stat-value sm text-truncate" title="@s.Biggest.Description">@Currency.Format(s.Biggest.Amount)</div>
+            <div class="stat-note text-truncate">@s.Biggest.Description</div>
+        }
+    </div>
+</div>
+
+<div class="grid-2">
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Where it went</h2>
+            @if (s.Count > 0)
+            {
+                <a class="panel-link" asp-page="/Expenses/Index" asp-route-month="@Model.SelectedMonthValue">View all</a>
+            }
+        </div>
+
+        @if (s.Categories.Count == 0)
+        {
+            <div class="empty">
+                <span class="empty-emoji" aria-hidden="true">🫙</span>
+                <p>No spending recorded this month.</p>
+                <a class="btn btn-primary btn-sm" asp-page="/Expenses/Create">Log your first expense</a>
+            </div>
+        }
+        else
+        {
+            <div class="donut-wrap">
+                <div class="donut" style="background: @s.DonutCss" role="img"
+                     aria-label="Share of spending by category">
+                    <div class="donut-hole">
+                        <span class="donut-total">@Currency.Format(s.Total)</span>
+                        <span class="donut-caption">total</span>
+                    </div>
+                </div>
+
+                <ul class="legend">
+                    @foreach (var c in s.Categories)
+                    {
+                        <li class="legend-row" title="@c.Category.Name: @Currency.Format(c.Total) (@c.SharePercent)">
+                            <span class="legend-dot" style="background: @c.Category.Color"></span>
+                            <span class="legend-name">
+                                <span aria-hidden="true">@c.Category.Emoji</span> @c.Category.Name
+                            </span>
+                            <span class="legend-share">@c.SharePercent</span>
+                            <span class="legend-money">@Currency.Format(c.Total)</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Last @s.Trend.Count months</h2>
+        </div>
+
+        <div class="trend" role="img" aria-label="Monthly spending for the last @s.Trend.Count months">
+            @foreach (var t in s.Trend)
+            {
+                <div class="trend-col" title="@t.Label: @Currency.Format(t.Total)">
+                    <div class="trend-track">
+                        <div class="trend-bar @(t.IsCurrent ? "current" : "")" style="height: @t.CssHeight"></div>
+                    </div>
+                    <span class="trend-label @(t.IsCurrent ? "current" : "")">@t.Label</span>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+<div class="grid-2">
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Spending pace</h2>
+            <span class="chip">Budget @Currency.FormatWhole(s.Budget)</span>
+        </div>
+
+        @if (!s.Chart.HasData)
+        {
+            <div class="empty">
+                <span class="empty-emoji" aria-hidden="true">📈</span>
+                <p>Add a couple of expenses and the month's pace shows up here.</p>
+            </div>
+        }
+        else
+        {
+            <svg class="spend-chart" viewBox="0 0 600 180" preserveAspectRatio="none"
+                 role="img" aria-label="Cumulative spending compared with budget pace">
+                <defs>
+                    <linearGradient id="spendFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#6366f1" stop-opacity=".30" />
+                        <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+                <path class="chart-area" d="@s.Chart.AreaPath" fill="url(#spendFill)" />
+                <path class="chart-budget" d="@s.Chart.BudgetPath" vector-effect="non-scaling-stroke" />
+                <path class="chart-line" d="@s.Chart.LinePath" vector-effect="non-scaling-stroke" />
+            </svg>
+
+            <div class="chart-axis">
+                <span>1 @s.MonthStart.ToString("MMM")</span>
+                <span>@(daysInMonth / 2) @s.MonthStart.ToString("MMM")</span>
+                <span>@daysInMonth @s.MonthStart.ToString("MMM")</span>
+            </div>
+
+            <div class="chart-key">
+                <span class="key-item"><span class="key-line"></span> Spend so far</span>
+                <span class="key-item"><span class="key-dash"></span> Budget pace</span>
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">When you spend</h2>
+            <span class="chip">Average per day</span>
+        </div>
+
+        <div class="trend compact" role="img" aria-label="Average spending by day of the week">
+            @foreach (var w in s.Weekdays)
+            {
+                <div class="trend-col" title="@w.Label: @Currency.Format(w.Average) on average">
+                    <div class="trend-track">
+                        <div class="trend-bar weekday" style="height: @w.CssHeight"></div>
+                    </div>
+                    <span class="trend-label">@w.Label</span>
+                </div>
+            }
+        </div>
+
+        <p class="chart-note">
+            Averaged across the six months up to @s.MonthName.
+            @{
+                var busiest = s.Weekdays.MaxBy(w => w.Average);
+            }
+            @if (busiest is not null && busiest.Average > 0)
+            {
+                <text>Your heaviest day is <strong>@busiest.Label</strong> at @Currency.Format(busiest.Average) a day.</text>
+            }
+        </p>
+    </section>
+</div>
+
+<section class="panel">
+    <div class="panel-head">
+        <h2 class="panel-title">Recent expenses</h2>
+        <a class="panel-link" asp-page="/Expenses/Index">All expenses</a>
+    </div>
+
+    @if (s.Recent.Count == 0)
+    {
+        <div class="empty">
+            <span class="empty-emoji" aria-hidden="true">🧾</span>
+            <p>Nothing here yet. Add an expense and it will show up instantly.</p>
+            <a class="btn btn-primary btn-sm" asp-page="/Expenses/Create">+ Add expense</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Item</th>
+                        <th scope="col">Category</th>
+                        <th scope="col" class="num">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in s.Recent)
+                    {
+                        <tr>
+                            <td class="date-cell">@e.SpentOn.ToString("dd MMM")</td>
+                            <td>
+                                <span class="desc">@e.Description</span>
+                                @if (!string.IsNullOrWhiteSpace(e.Notes))
+                                {
+                                    <span class="desc-note">@e.Notes</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="chip">
+                                    <span aria-hidden="true">@CategoryCatalog.Get(e.Category).Emoji</span>
+                                    @e.Category
+                                </span>
+                            </td>
+                            <td class="num">@Currency.Format(e.Amount)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

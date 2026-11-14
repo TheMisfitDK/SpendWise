@@ -1,0 +1,122 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Expenses";
+    var r = Model.Result;
+}
+
+<div class="page-head">
+    <div>
+        <h1>Expenses</h1>
+        <p class="sub">Every transaction you have logged, newest first.</p>
+    </div>
+    @if (r.TotalCount > 0)
+    {
+        <div class="d-flex gap-2">
+            <a class="btn btn-danger" asp-page="./DeleteAll">Delete all</a>
+            <a class="btn btn-primary" asp-page="./Create">+ Add expense</a>
+        </div>
+    }
+    else
+    {
+        <a class="btn btn-primary" asp-page="./Create">+ Add expense</a>
+    }
+</div>
+
+<form method="get" class="filters">
+    <input class="form-control" type="search" name="q" value="@Model.Q"
+           placeholder="Search description or notes…" aria-label="Search" />
+
+    <select class="form-select" name="category" aria-label="Category">
+        <option value="">All categories</option>
+        @foreach (var c in Model.Categories)
+        {
+            <option value="@c" selected="@(c == Model.Category)">@c</option>
+        }
+    </select>
+
+    <input class="form-control" type="month" name="month" value="@Model.Month" aria-label="Month" />
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Filter</button>
+        <a class="btn btn-ghost" asp-page="./Index">Reset</a>
+    </div>
+</form>
+
+<div class="panel">
+    <div class="panel-head">
+        <h2 class="panel-title">
+            @r.TotalCount expense@(r.TotalCount == 1 ? "" : "s")
+        </h2>
+        <span class="chip">Total @Currency.Format(r.Total)</span>
+    </div>
+
+    @if (r.TotalCount == 0)
+    {
+        <div class="empty">
+            <span class="empty-emoji" aria-hidden="true">🔍</span>
+            <p>No expenses match those filters.</p>
+            <a class="btn btn-ghost btn-sm" asp-page="./Index">Clear filters</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Item</th>
+                        <th scope="col">Category</th>
+                        <th scope="col" class="num">Amount</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in r.Items)
+                    {
+                        <tr>
+                            <td class="date-cell">@e.SpentOn.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span class="desc">@e.Description</span>
+                                @if (!string.IsNullOrWhiteSpace(e.Notes))
+                                {
+                                    <span class="desc-note">@e.Notes</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="chip">
+                                    <span aria-hidden="true">@CategoryCatalog.Get(e.Category).Emoji</span>
+                                    @e.Category
+                                </span>
+                            </td>
+                            <td class="num">@Currency.Format(e.Amount)</td>
+                            <td>
+                                <div class="row-actions">
+                                    <a class="btn btn-ghost btn-sm" asp-page="./Edit" asp-route-id="@e.Id">Edit</a>
+                                    <a class="btn btn-danger btn-sm" asp-page="./Delete" asp-route-id="@e.Id">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pager">
+            <span>Showing @r.FirstItemNumber–@r.LastItemNumber of @r.TotalCount</span>
+            <div class="pager-links">
+                @if (r.HasPrevious)
+                {
+                    <a class="btn btn-ghost btn-sm" asp-page="./Index"
+                       asp-all-route-data="Model.RouteFor(r.PageNumber - 1)">Previous</a>
+                }
+                @if (r.HasNext)
+                {
+                    <a class="btn btn-ghost btn-sm" asp-page="./Index"
+                       asp-all-route-data="Model.RouteFor(r.PageNumber + 1)">Next</a>
+                }
+            </div>
+        </div>
+    }
+</div>
