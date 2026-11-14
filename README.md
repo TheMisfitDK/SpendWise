@@ -156,11 +156,3 @@ dotnet tool restore
 dotnet ef migrations add SomeChange
 dotnet ef database update
 ```
-
-## Where to take it next
-
-- Add ASP.NET Core Identity so each user sees only their own expenses
-- Per-category budgets and a "you're close to your limit" warning
-- CSV export of a month, or import from a bank statement
-- Recurring expenses that generate themselves on the 1st of each month
-- xUnit tests around `ExpenseService.GetMonthSummaryAsync`
