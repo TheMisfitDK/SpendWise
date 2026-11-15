@@ -134,7 +134,8 @@ Adding another currency is one line in `CurrencyService.Supported`.
 
 ## License
 
-SpendWise is open source software licensed under the [MIT License](LICENSE).
+SpendWise is open-source software. It is available under the [MIT License](LICENSE),
+which permits use, modification, and redistribution subject to the license terms.
 
 ## How money is stored
 
